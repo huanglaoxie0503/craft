@@ -14,6 +14,7 @@ from craft.core.scheduler import Scheduler
 from craft.core.downloader import Downloader
 from craft.exceptions import TransformTypeError, OutputError
 from craft.spider import Spider
+from craft.task_manager import TaskManager
 
 
 class Engine(object):
@@ -22,10 +23,14 @@ class Engine(object):
         self.start_requests: Optional[Generator] = None
         self.scheduler: Optional[Scheduler] = None
         self.spider: Optional[Spider] = None
+        self.task_manager: Optional[TaskManager] = None
+        self.running = False
 
     async def start_spider(self, spider):
+        self.running = True
         self.spider = spider
         self.scheduler = Scheduler()
+        self.task_manager = TaskManager()
         if hasattr(self.scheduler, 'open'):
             self.scheduler.open()
 
@@ -45,7 +50,7 @@ class Engine(object):
         爬虫主逻辑
         :return:
         """
-        while True:
+        while self.running:
             if (request := await self._get_next_request()) is not None:
                 await self._crawl(request)
             else:
@@ -54,7 +59,13 @@ class Engine(object):
                 except StopIteration:
                     self.start_requests = None
                 except Exception as exp:
-                    break
+                    # 1、发起请求的task要运行完毕
+                    # 2、调度器是否空闲
+                    # 3、下载器是否空闲
+                    # 3 个条件同时满足才能 break
+                    if not await self._exit():
+                        continue
+                    self.running = False
                 else:
                     # 入队
                     await self.enqueue_request(start_request)
@@ -67,7 +78,8 @@ class Engine(object):
             if outputs:
                 await self._handle_spider_output(outputs)
 
-        await asyncio.create_task(crawl_task())
+        await self.task_manager.semaphore.acquire()
+        self.task_manager.create_task(crawl_task())
 
     async def transform(self, funcs):
         if isgenerator(funcs):
@@ -112,3 +124,9 @@ class Engine(object):
             # TODO 判断是不是数据
             else:
                 raise OutputError(f'{type(self.spider)} must return a `Request` or a `Item`!')
+
+    async def _exit(self):
+        if self.scheduler.idle() and self.downloader.idle() and self.task_manager.all_done():
+            return True
+        else:
+            return False

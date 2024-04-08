@@ -5,6 +5,7 @@
 # @Author  :   oscar
 # @Desc    :   None
 """
+import time
 import asyncio
 
 from craft.core.engine import Engine
@@ -18,4 +19,9 @@ async def main():
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     asyncio.run(main())
+
+    end_time = time.time()
+
+    print('Total time: {} seconds'.format(end_time - start_time))

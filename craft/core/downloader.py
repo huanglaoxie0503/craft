@@ -13,10 +13,13 @@ import requests
 
 class Downloader(object):
     def __init__(self):
-        pass
+        self._active = set()
 
     async def fetch(self, request):
-        return await self.download(request=request)
+        self._active.add(request)
+        response = await self.download(request=request)
+        self._active.remove(request)
+        return response
 
     async def download(self, request):
         stop_num = random.uniform(0, 1)
@@ -27,3 +30,10 @@ class Downloader(object):
         # response = requests.get(request.url)
         # if response.status_code == 200:
         #     print(response)
+
+    def idle(self) -> bool:
+        return len(self) == 0
+
+    def __len__(self):
+        return len(self._active)
+
