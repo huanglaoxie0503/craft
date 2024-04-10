@@ -6,8 +6,6 @@
 # @Author  :   oscar
 # @Desc    :   新闻爬虫测试
 """
-import requests
-from craft.core.engine import Engine
 from craft import Request
 from craft.spider import Spider
 

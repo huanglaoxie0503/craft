@@ -13,3 +13,7 @@ class TransformTypeError(TypeError):
 
 class OutputError(Exception):
     pass
+
+
+class SpiderTypeError(TypeError):
+    pass

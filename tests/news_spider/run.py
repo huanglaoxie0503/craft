@@ -8,14 +8,18 @@
 import time
 import asyncio
 
-from craft.core.engine import Engine
 from tests.news_spider.news import NewsSpider
+from tests.news_spider.news2 import NewsSpider2
+from craft.crawler import CrawlerProcess
+from craft.utils.tools import get_settings
 
 
 async def main():
-    news_spider = NewsSpider()
-    engine = Engine()
-    await engine.start_spider(news_spider)
+    settings = get_settings()
+    process = CrawlerProcess(settings)
+    await process.crawl(NewsSpider)
+    await process.crawl(NewsSpider2)
+    await process.start()
 
 
 if __name__ == '__main__':

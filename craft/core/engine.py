@@ -18,11 +18,14 @@ from craft.task_manager import TaskManager
 
 
 class Engine(object):
-    def __init__(self):
+    def __init__(self, crawler):
+        self.crawler = crawler
+        self.settings = crawler.settings
         self.downloader: Optional[Downloader] = None
         self.start_requests: Optional[Generator] = None
         self.scheduler: Optional[Scheduler] = None
         self.spider: Optional[Spider] = None
+        print(f'当前的并发数{self.settings.get_int("CONCURRENCY_NUMS")}')
         self.task_manager: Optional[TaskManager] = None
         self.running = False
 
@@ -30,7 +33,7 @@ class Engine(object):
         self.running = True
         self.spider = spider
         self.scheduler = Scheduler()
-        self.task_manager = TaskManager()
+        self.task_manager = TaskManager(self.settings.get_int('CONCURRENCY_NUMS'))
         if hasattr(self.scheduler, 'open'):
             self.scheduler.open()
 
