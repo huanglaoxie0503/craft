@@ -1,0 +1,83 @@
+#!/usr/bin/python
+# -*- coding:UTF-8 -*-
+"""
+# @Time    :    2024-04-11 01:04
+# @Author  :   oscar
+# @Desc    :   None
+"""
+from copy import deepcopy
+from pprint import pformat
+from collections.abc import MutableMapping
+
+from craft.items import Field, ItemMeta
+
+
+class Item(MutableMapping, metaclass=ItemMeta):
+    FIELDS: dict
+
+    def __init__(self):
+        self._values = {}
+
+    def __getitem__(self, item):
+        return self._values[item]
+
+    def __setitem__(self, key, value):
+        if key in self.FIELDS:
+            self._values[key] = value
+        else:
+            raise KeyError(f'{self.__class__.__name__} does not support field: {key}')
+
+    def __delitem__(self, key):
+        del self._values[key]
+
+    def __setattr__(self, key, value):
+        if not key.startswith('_'):
+            raise AttributeError(f'please use item[{key!r}] = {value!r} to set field value.')
+        super().__setattr__(key, value)
+
+    def __getattr__(self, item):
+        # 当获取不到属性时触发
+        raise AttributeError(
+            f'{self.__class__.__name__} does not support field：{item}. Please add the `{item}` field to the {self.__class__.__name__}, and use the `item[{item!r}]` to get field value.'
+        )
+
+    def __getattribute__(self, item):
+        # 属性拦截器，只要访问属性就会进入该方法
+        field = super().__getattribute__('FIELDS')
+        if item in field:
+            raise AttributeError(f'please use item[{item!r} to get field value.')
+        else:
+            return super().__getattribute__(item)
+
+    def __repr__(self):
+        return pformat(dict(self))
+
+    __str__ = __repr__
+
+    def __iter__(self):
+        return iter(self._values)
+
+    def __len__(self):
+        return len(self._values)
+
+    def to_dict(self):
+        return dict(self)
+
+    def copy(self):
+        return deepcopy(self)
+
+
+if __name__ == '__main__':
+    class TestItem(Item):
+        url = Field()
+        title = Field()
+
+    class TestItem2(Item):
+        name = Field()
+        age = Field()
+
+
+    test_item = TestItem()
+    test_item2 = TestItem2()
+    test_item['url'] = 'https://www.baidu.com'
+    print(test_item.xx)

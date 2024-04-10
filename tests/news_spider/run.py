@@ -8,8 +8,8 @@
 import time
 import asyncio
 
-from tests.news_spider.news import NewsSpider
-from tests.news_spider.news2 import NewsSpider2
+from tests.news_spider.spiders.news import NewsSpider
+from tests.news_spider.spiders.news2 import NewsSpider2
 from craft.crawler import CrawlerProcess
 from craft.utils.tools import get_settings
 

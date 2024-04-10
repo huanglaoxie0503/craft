@@ -12,7 +12,9 @@ from typing import Optional, Generator, Callable
 from craft import Request
 from craft.core.scheduler import Scheduler
 from craft.core.downloader import Downloader
+from craft.core.processor import Processor
 from craft.exceptions import TransformTypeError, OutputError
+from craft.items.items import Item
 from craft.spider import Spider
 from craft.task_manager import TaskManager
 
@@ -22,6 +24,7 @@ class Engine(object):
         self.crawler = crawler
         self.settings = crawler.settings
         self.downloader: Optional[Downloader] = None
+        self.processor: Optional[Processor] = None
         self.start_requests: Optional[Generator] = None
         self.scheduler: Optional[Scheduler] = None
         self.spider: Optional[Spider] = None
@@ -33,6 +36,7 @@ class Engine(object):
         self.running = True
         self.spider = spider
         self.scheduler = Scheduler()
+        self.processor = Processor(self.crawler)
         self.task_manager = TaskManager(self.settings.get_int('CONCURRENCY_NUMS'))
         if hasattr(self.scheduler, 'open'):
             self.scheduler.open()
@@ -121,15 +125,14 @@ class Engine(object):
 
     async def _handle_spider_output(self, outputs):
         async for spider_output in outputs:
-            if isinstance(spider_output, Request):
-                # 请求入队
-                await self.enqueue_request(spider_output)
-            # TODO 判断是不是数据
+            if isinstance(spider_output, (Request, Item)):
+                # 入队
+                await self.processor.enqueue(spider_output)
             else:
                 raise OutputError(f'{type(self.spider)} must return a `Request` or a `Item`!')
 
     async def _exit(self):
-        if self.scheduler.idle() and self.downloader.idle() and self.task_manager.all_done():
+        if self.scheduler.idle() and self.downloader.idle() and self.task_manager.all_done() and self.processor.idle():
             return True
         else:
             return False
