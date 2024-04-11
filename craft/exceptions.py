@@ -25,3 +25,7 @@ class ItemInitError(Exception):
 
 class ItemAttributeError(Exception):
     pass
+
+
+class DecodeError(Exception):
+    pass

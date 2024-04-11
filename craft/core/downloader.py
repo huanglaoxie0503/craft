@@ -6,9 +6,9 @@
 # @Desc    :   下载器
 """
 import asyncio
-import time
+import aiohttp
+import httpx
 import random
-import requests
 
 
 class Downloader(object):

@@ -19,7 +19,9 @@ class Request(object):
             body: Optional[bytes] = None,
             method: Optional[str] = 'GET',
             cookies: Optional[Dict[str, str]] = None,
-            priority: int = 0
+            priority: int = 0,
+            encoding: Optional[str] = 'UTF-8',
+            meta: Optional[Dict[str, str]] = None
 
     ):
         self.url = url
@@ -29,6 +31,15 @@ class Request(object):
         self.method = method
         self.cookies = cookies
         self.priority = priority
+        self.encoding = encoding
+        self._meta = meta if meta is not None else {}
+
+    @property
+    def meta(self):
+        return self._meta
+
+    def __str__(self):
+        return f'<Request url={self.url}> method={self.method}>'
 
     def __lt__(self, other):
         return self.priority < other.priority
