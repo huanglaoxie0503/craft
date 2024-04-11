@@ -9,14 +9,20 @@ from copy import deepcopy
 from pprint import pformat
 from collections.abc import MutableMapping
 
+from craft.exceptions import ItemInitError, ItemAttributeError
 from craft.items import Field, ItemMeta
 
 
 class Item(MutableMapping, metaclass=ItemMeta):
     FIELDS: dict
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._values = {}
+        if args:
+            raise ItemInitError(f'{self.__class__.__name__}: position {args} is not supported. use keyword args.')
+        if kwargs:
+            for k, v in kwargs.items():
+                self[k] = v
 
     def __getitem__(self, item):
         return self._values[item]
@@ -45,7 +51,7 @@ class Item(MutableMapping, metaclass=ItemMeta):
         # 属性拦截器，只要访问属性就会进入该方法
         field = super().__getattribute__('FIELDS')
         if item in field:
-            raise AttributeError(f'please use item[{item!r} to get field value.')
+            raise ItemAttributeError(f'please use item[{item!r} to get field value.')
         else:
             return super().__getattribute__(item)
 
@@ -77,7 +83,7 @@ if __name__ == '__main__':
         age = Field()
 
 
-    test_item = TestItem()
+    test_item = TestItem("http://example.com")
     test_item2 = TestItem2()
-    test_item['url'] = 'https://www.baidu.com'
-    print(test_item.xx)
+    # test_item['url'] = 'https://www.baidu.com'
+    print(test_item['url'])

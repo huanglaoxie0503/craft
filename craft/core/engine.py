@@ -17,10 +17,12 @@ from craft.exceptions import TransformTypeError, OutputError
 from craft.items.items import Item
 from craft.spider import Spider
 from craft.task_manager import TaskManager
+from craft.utils.log import get_logger
 
 
 class Engine(object):
     def __init__(self, crawler):
+        self.log = get_logger(self.__class__.__name__)
         self.crawler = crawler
         self.settings = crawler.settings
         self.downloader: Optional[Downloader] = None
@@ -34,6 +36,7 @@ class Engine(object):
 
     async def start_spider(self, spider):
         self.running = True
+        self.log.info(f"info Spider started. (spider name: {self.settings.get('SPIDER_NAME')})")
         self.spider = spider
         self.scheduler = Scheduler()
         self.processor = Processor(self.crawler)
@@ -73,6 +76,8 @@ class Engine(object):
                     if not await self._exit():
                         continue
                     self.running = False
+                    if self.start_requests is not None:
+                        self.log.error(f"Error in crawling start_requests: {exp}")
                 else:
                     # 入队
                     await self.enqueue_request(start_request)

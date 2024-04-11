@@ -20,13 +20,15 @@ class Processor(object):
         while not self.idle():
             # 队列不空闲，则取数据
             result = await self.queue.get()
+            # 处理 Request
             if isinstance(result, Request):
                 await self.crawler.engine.enqueue_request(result)
             else:
+                # 处理 Item
                 assert isinstance(result, Item)
                 await self._process_item(result)
 
-    async def _process_item(self, item):
+    async def _process_item(self, item: Item) -> None:
         print(item)
 
     async def enqueue(self, output):

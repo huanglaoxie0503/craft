@@ -11,7 +11,5 @@ SPIDER_NAME = 'jd_spider'
 # 并发数
 CONCURRENCY_NUMS = 32
 
-#
-TEST = '6666'
-
-TASK_NAME = 'test'
+# 日志级别
+LOG_LEVEL = 'INFO'
