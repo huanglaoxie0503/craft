@@ -18,7 +18,7 @@ async def main():
     settings = get_settings()
     process = CrawlerProcess(settings)
     await process.crawl(NewsSpider)
-    await process.crawl(NewsSpider2)
+    # await process.crawl(NewsSpider2)
     await process.start()
 
 

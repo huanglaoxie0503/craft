@@ -11,13 +11,14 @@ from typing import Optional, Generator, Callable
 
 from craft import Request
 from craft.core.scheduler import Scheduler
-from craft.core.downloader import Downloader
+from craft.downloader import DownloaderBase
 from craft.core.processor import Processor
 from craft.exceptions import TransformTypeError, OutputError
 from craft.items.items import Item
 from craft.spider import Spider
 from craft.task_manager import TaskManager
 from craft.utils.log import get_logger
+from craft.utils.tools import load_class
 
 
 class Engine(object):
@@ -25,7 +26,7 @@ class Engine(object):
         self.log = get_logger(self.__class__.__name__)
         self.crawler = crawler
         self.settings = crawler.settings
-        self.downloader: Optional[Downloader] = None
+        self.downloader: Optional[DownloaderBase] = None
         self.processor: Optional[Processor] = None
         self.start_requests: Optional[Generator] = None
         self.scheduler: Optional[Scheduler] = None
@@ -34,17 +35,30 @@ class Engine(object):
         self.task_manager: Optional[TaskManager] = None
         self.running = False
 
+    def _get_downloader(self):
+        downloader_cls = load_class(self.settings.get('DOWNLOADER'))
+        if not issubclass(downloader_cls, DownloaderBase):
+            raise TypeError(f"{downloader_cls} The Downloader is not a subclass of {DownloaderBase}")
+        return downloader_cls
+
     async def start_spider(self, spider):
         self.running = True
         self.log.info(f"info Spider started. (spider name: {self.settings.get('SPIDER_NAME')})")
         self.spider = spider
-        self.scheduler = Scheduler()
         self.processor = Processor(self.crawler)
         self.task_manager = TaskManager(self.settings.get_int('CONCURRENCY_NUMS'))
+        # 调度器
+        self.scheduler = Scheduler()
         if hasattr(self.scheduler, 'open'):
             self.scheduler.open()
 
-        self.downloader = Downloader()
+        # 下载器
+        # self.downloader = Downloader(self.crawler)
+        # self.downloader = HttpxDownloader(crawler=self.crawler)
+        downloader_cls = self._get_downloader()  # load_class(self.settings.get('DOWNLOADER'))
+        self.downloader = downloader_cls(self.crawler)
+        if hasattr(self.downloader, 'open'):
+            self.downloader.open()
 
         self.start_requests = iter(spider.start_requests())
 
@@ -81,6 +95,8 @@ class Engine(object):
                 else:
                     # 入队
                     await self.enqueue_request(start_request)
+        if not self.running:
+            await self.close_spider()
 
     async def _crawl(self, request):
         # TODO 1、实现并发
@@ -114,6 +130,8 @@ class Engine(object):
                     return self.transform(_outputs)
 
         _response = await self.downloader.fetch(request)
+        if _response is None:
+            return None
         outputs = await _successful(_response)
         return outputs
 
@@ -141,3 +159,6 @@ class Engine(object):
             return True
         else:
             return False
+
+    async def close_spider(self):
+        await self.downloader.close()

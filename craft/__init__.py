@@ -8,4 +8,5 @@
 # @Desc    :   None
 """
 from craft.net.request import Request
+from craft.net.response import Response
 from craft.items.items import Item

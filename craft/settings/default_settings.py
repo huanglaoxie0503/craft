@@ -7,9 +7,16 @@
 """
 
 # 爬虫名称
-SPIDER_NAME = 'jd_spider'
+SPIDER_NAME = 'craft_spider'
 # 并发数
 CONCURRENCY_NUMS = 32
-
 # 日志级别
 LOG_LEVEL = 'INFO'
+
+VERIFY_SSL = True
+# 请求超时时间
+TIMEOUT = 60
+# 是否使用同一个连接
+USER_SESSION = True
+# 默认下载器
+DOWNLOADER = 'craft.downloader.aiohttp_downloader.AioHttpDownloader'
