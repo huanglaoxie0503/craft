@@ -35,7 +35,7 @@ class Engine(object):
         self.task_manager: Optional[TaskManager] = None
         self.running = False
 
-    def _get_downloader(self):
+    def _get_downloader_cls(self):
         downloader_cls = load_class(self.settings.get('DOWNLOADER'))
         if not issubclass(downloader_cls, DownloaderBase):
             raise TypeError(f"{downloader_cls} The Downloader is not a subclass of {DownloaderBase}")
@@ -55,7 +55,7 @@ class Engine(object):
         # 下载器
         # self.downloader = Downloader(self.crawler)
         # self.downloader = HttpxDownloader(crawler=self.crawler)
-        downloader_cls = self._get_downloader()  # load_class(self.settings.get('DOWNLOADER'))
+        downloader_cls = self._get_downloader_cls()  # load_class(self.settings.get('DOWNLOADER'))
         self.downloader = downloader_cls(self.crawler)
         if hasattr(self.downloader, 'open'):
             self.downloader.open()
@@ -161,4 +161,5 @@ class Engine(object):
             return False
 
     async def close_spider(self):
+        await asyncio.gather(*self.task_manager.current_task)
         await self.downloader.close()

@@ -7,6 +7,7 @@
 """
 from abc import abstractmethod
 from typing import Final, Set, Optional
+from typing_extensions import Self
 from contextlib import asynccontextmanager
 
 from craft import Response, Request
@@ -20,10 +21,10 @@ class DownloaderBase(object):
         self.logger = get_logger(self.__class__.__name__, self.crawler.settings.get('LOG_LEVEL'))
 
     @classmethod
-    def create_instance(cls, *args, **kwargs) -> 'DownloaderBase':
+    def create_instance(cls, *args, **kwargs) -> Self:
         return cls(*args, **kwargs)
 
-    def open(self):
+    def open(self) -> None:
         self.logger.info(
             f'{self.crawler.spider} <downloader class：{type(self).__name__}>'
             f' <concurrency：{self.crawler.settings.get_int("CONCURRENCY_NUMS")}>'
@@ -41,10 +42,10 @@ class DownloaderBase(object):
     def idle(self) -> bool:
         return len(self) == 0
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._active)
 
-    async def close(self):
+    async def close(self) -> None:
         pass
 
 

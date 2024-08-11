@@ -5,6 +5,7 @@
 # @Author  :   oscar
 # @Desc    :   None
 """
+import signal
 import asyncio
 from typing import Type, Final, Set, Optional
 
@@ -13,6 +14,9 @@ from craft.spider import Spider
 from craft.core.engine import Engine
 from craft.settings.settings_manager import SettingsManager
 from craft.utils.tools import merge_settings
+from craft.utils.log import get_logger
+
+logger = get_logger(__name__)
 
 
 class Crawler(object):
@@ -48,6 +52,8 @@ class CrawlerProcess(object):
         self._active_spiders: Final[Set] = set()
         self.settings = settings
 
+        signal.signal(signal.SIGINT, self._shutdown)
+
     async def crawl(self, spider: Type[Spider]):
         crawler: Crawler = self._create_crawler(spider)
         self.crawlers.add(crawler)
@@ -66,3 +72,8 @@ class CrawlerProcess(object):
             raise SpiderTypeError(f'{type(self)}.crawl args: String not supported.')
         crawler = Crawler(spider_cls, self.settings)
         return crawler
+
+    def _shutdown(self, signum, frame):
+        for crawler in self.crawlers:
+            crawler.engine.running = False
+        logger.warning(f'Crawler received "ctrl c" signal {signum}, shutting down.')
