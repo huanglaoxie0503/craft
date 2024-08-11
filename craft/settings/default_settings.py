@@ -22,3 +22,7 @@ INTERVAL = 5
 USER_SESSION = True
 # 默认下载器
 DOWNLOADER = 'craft.downloader.aiohttp_downloader.AioHttpDownloader'
+# 中间件
+MIDDLEWARES = [
+
+]

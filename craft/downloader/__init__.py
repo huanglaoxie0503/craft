@@ -11,6 +11,7 @@ from typing_extensions import Self
 from contextlib import asynccontextmanager
 
 from craft import Response, Request
+from craft.middleware.middleware_manager import MiddlewareManager
 from craft.utils.log import get_logger
 
 
@@ -18,6 +19,7 @@ class DownloaderBase(object):
     def __init__(self, crawler):
         self.crawler = crawler
         self._active = ActiveRequestManager()
+        self.middleware: Optional[MiddlewareManager] = None
         self.logger = get_logger(self.__class__.__name__, self.crawler.settings.get('LOG_LEVEL'))
 
     @classmethod
@@ -29,6 +31,7 @@ class DownloaderBase(object):
             f'{self.crawler.spider} <downloader class：{type(self).__name__}>'
             f' <concurrency：{self.crawler.settings.get_int("CONCURRENCY_NUMS")}>'
         )
+        self.middleware = MiddlewareManager.create_instance(self.crawler)
 
     async def fetch(self, request) -> Optional[Response]:
         async with self._active(request):
