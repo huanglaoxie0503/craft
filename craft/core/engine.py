@@ -31,9 +31,9 @@ class Engine(object):
         self.start_requests: Optional[Generator] = None
         self.scheduler: Optional[Scheduler] = None
         self.spider: Optional[Spider] = None
-        print(f'当前的并发数{self.settings.get_int("CONCURRENCY_NUMS")}')
         self.task_manager: Optional[TaskManager] = None
         self.running = False
+        self.normal = True
 
     def _get_downloader_cls(self):
         downloader_cls = load_class(self.settings.get('DOWNLOADER'))
@@ -48,7 +48,7 @@ class Engine(object):
         self.processor = Processor(self.crawler)
         self.task_manager = TaskManager(self.settings.get_int('CONCURRENCY_NUMS'))
         # 调度器
-        self.scheduler = Scheduler()
+        self.scheduler = Scheduler(self.crawler)
         if hasattr(self.scheduler, 'open'):
             self.scheduler.open()
 
@@ -66,6 +66,7 @@ class Engine(object):
 
     async def _open_spider(self):
         crawling = asyncio.create_task(self.crawl())
+        asyncio.create_task(self.scheduler.interval_log(self.settings.get_int('INTERVAL')))
         await crawling
         print('*********************')
 
@@ -163,3 +164,5 @@ class Engine(object):
     async def close_spider(self):
         await asyncio.gather(*self.task_manager.current_task)
         await self.downloader.close()
+        if self.normal:
+            await self.crawler.close()

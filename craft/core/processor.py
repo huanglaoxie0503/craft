@@ -29,7 +29,8 @@ class Processor(object):
                 await self._process_item(result)
 
     async def _process_item(self, item: Item) -> None:
-        print(item)
+        self.crawler.stats.inc_value("item_successful_count")
+        # print(item)
 
     async def enqueue(self, output):
         await self.queue.put(output)

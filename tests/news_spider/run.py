@@ -28,4 +28,4 @@ if __name__ == '__main__':
 
     end_time = time.time()
 
-    print('Total time: {} seconds'.format(end_time - start_time))
+    # print('Total time: {} seconds'.format(end_time - start_time))

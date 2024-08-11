@@ -44,6 +44,9 @@ class HttpxDownloader(DownloaderBase):
         except Exception as exp:
             self.logger.error(f'ERROR during request: {request.url}')
             return None
+        else:
+            self.crawler.stats.inc_value('response_received_count')
+
         return self.structure_response(request, response, body)
 
     @staticmethod

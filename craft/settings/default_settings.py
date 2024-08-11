@@ -16,6 +16,8 @@ LOG_LEVEL = 'INFO'
 VERIFY_SSL = True
 # 请求超时时间
 TIMEOUT = 60
+# 延迟时间
+INTERVAL = 5
 # 是否使用同一个连接
 USER_SESSION = True
 # 默认下载器
