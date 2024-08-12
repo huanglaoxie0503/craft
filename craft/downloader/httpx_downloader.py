@@ -43,9 +43,7 @@ class HttpxDownloader(DownloaderBase):
                 body = await response.aread()
         except Exception as exp:
             self.logger.error(f'ERROR during request: {request.url}')
-            return None
-        else:
-            self.crawler.stats.inc_value('response_received_count')
+            raise exp
 
         return self.structure_response(request, response, body)
 

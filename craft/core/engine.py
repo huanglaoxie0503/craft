@@ -6,17 +6,18 @@
 # @Desc    :   爬虫引擎
 """
 import asyncio
-from inspect import iscoroutine, isgenerator, isasyncgen
+from inspect import iscoroutine
 from typing import Optional, Generator, Callable
 
 from craft import Request
 from craft.core.scheduler import Scheduler
 from craft.downloader import DownloaderBase
 from craft.core.processor import Processor
-from craft.exceptions import TransformTypeError, OutputError
+from craft.exceptions import OutputError
 from craft.items.items import Item
 from craft.spider import Spider
 from craft.task_manager import TaskManager
+from craft.utils.common import transform
 from craft.utils.log import get_logger
 from craft.utils.tools import load_class
 
@@ -110,16 +111,6 @@ class Engine(object):
         await self.task_manager.semaphore.acquire()
         self.task_manager.create_task(crawl_task())
 
-    async def transform(self, funcs):
-        if isgenerator(funcs):
-            for func in funcs:
-                yield func
-        elif isasyncgen(funcs):
-            async for func in funcs:
-                yield func
-        else:
-            raise TransformTypeError('callback must be a `generator` or `async generator`!')
-
     async def _fetch(self, request):
         async def _successful(_response):
             callback: Callable = request.callback or self.spider.parse
@@ -128,7 +119,7 @@ class Engine(object):
                 if iscoroutine(_outputs):
                     await _outputs
                 else:
-                    return self.transform(_outputs)
+                    return transform(_outputs)
 
         _response = await self.downloader.fetch(request)
         if _response is None:

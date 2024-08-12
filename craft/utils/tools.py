@@ -7,9 +7,18 @@
 """
 import os
 import sys
+from typing import Callable
+from inspect import iscoroutinefunction
 from importlib import import_module
 
 from craft.settings.settings_manager import SettingsManager
+
+
+async def common_callback(func: Callable, *args, **kwargs):
+    if iscoroutinefunction(func):
+        return await func(*args, **kwargs)
+    else:
+        return func(*args, **kwargs)
 
 
 def _get_closest(path='.'):

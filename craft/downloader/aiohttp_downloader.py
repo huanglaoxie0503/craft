@@ -62,9 +62,7 @@ class AioHttpDownloader(DownloaderBase):
                     body = await response.read()
         except Exception as exp:
             self.logger.error(f'Error downloading {request}: {exp}')
-            return None
-        else:
-            self.crawler.stats.inc_value('response_received_count')
+            raise exp
         return self.structure_response(request, response, body)
 
     @staticmethod
