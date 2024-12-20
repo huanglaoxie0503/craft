@@ -67,7 +67,7 @@ class Engine(object):
 
     async def _open_spider(self):
         crawling = asyncio.create_task(self.crawl())
-        asyncio.create_task(self.scheduler.interval_log(self.settings.get_int('INTERVAL')))
+        create_task(self.scheduler.interval_log(self.settings.get_int('INTERVAL')))
         await crawling
         print('*********************')
 
