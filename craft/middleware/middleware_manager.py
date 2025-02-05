@@ -5,13 +5,13 @@
 # @Author  :   oscar
 # @Desc    :   中间件
 """
-from typing import List, Dict, Callable, Optional
 from types import MethodType
 from pprint import pformat
 from collections import defaultdict
+from typing import List, Dict, Callable, Optional
 
 from craft import Request, Response
-from craft.exceptions import MiddlewareInitError, InvalidOutputError, RequestMethodError
+from craft.exceptions import MiddlewareInitError, InvalidOutputError, RequestMethodError, IgnoreRequestError
 from craft.middleware import BaseMiddleware
 from craft.utils.log import get_logger
 from craft.utils.tools import load_class, common_callback
@@ -73,6 +73,12 @@ class MiddlewareManager:
             response = await self._process_request(request)
         except KeyError:
             raise RequestMethodError(f"Request method {request.method.lower()} is not supported.")
+        except IgnoreRequestError as exp:
+            self.logger.warning(f'ignore request: {request}')
+            reason = exp.msg
+            if reason:
+                self._stats.inc_value(f'ignore_request_count/{reason}')
+            response = await self._process_exception(request, exp)
         except Exception as exp:
             self._stats.inc_value(f'download_error/{exp.__class__.__name__}')
             response = await self._process_exception(request, exp)

@@ -8,6 +8,7 @@
 import asyncio
 from typing import Optional
 
+from craft.event import request_scheduled
 from craft.utils.pqueue import SpiderPriorityQueue
 from craft.utils.log import get_logger
 
@@ -29,6 +30,7 @@ class Scheduler:
 
     async def enqueue_request(self, request):
         await self.request_queue.put(request)
+        asyncio.create_task(self.crawler.subscriber.notify(request_scheduled, request, self.crawler.spider))
         self.crawler.stats.inc_value(key='request_scheduler_count')
 
     async def interval_log(self, interval=3):

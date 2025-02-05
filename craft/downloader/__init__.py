@@ -35,7 +35,6 @@ class DownloaderBase(object):
 
     async def fetch(self, request) -> Optional[Response]:
         async with self._active(request):
-            # response = await self.download(request=request)
             response = await self.middleware.download(request)
             return response
 

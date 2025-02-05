@@ -76,7 +76,11 @@ class AioHttpDownloader(DownloaderBase):
         )
 
     async def send_request(self, session, request) -> ClientResponse:
-        return await self.request_method[request.method.lower()](session, request)
+        try:
+            return await self.request_method[request.method.lower()](session, request)
+        except KeyError as exp:
+            self.logger.error(f'Error downloading {request}: {exp}')
+            raise exp
 
     @staticmethod
     async def _get(session, request) -> ClientResponse:

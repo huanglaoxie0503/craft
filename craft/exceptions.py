@@ -41,3 +41,19 @@ class InvalidOutputError(Exception):
 
 class RequestMethodError(Exception):
     pass
+
+
+class PipelineInitError(Exception):
+    pass
+
+
+class IgnoreRequestError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+        super(IgnoreRequestError, self).__init__(msg)
+
+
+class ItemDiscard(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+        super(ItemDiscard, self).__init__(msg)

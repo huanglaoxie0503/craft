@@ -11,7 +11,7 @@ from inspect import isgenerator, isasyncgen
 from craft.exceptions import TransformTypeError
 
 
-def now():
+def get_now():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 

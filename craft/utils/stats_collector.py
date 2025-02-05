@@ -7,7 +7,7 @@
 """
 from pprint import pformat
 from craft.utils.log import get_logger
-from craft.utils.common import date_delta, now
+from craft.utils.common import date_delta, get_now
 
 
 class StatsCollector(object):
@@ -15,6 +15,7 @@ class StatsCollector(object):
         self.crawler = crawler
         self._stats = {}
         self.logger = get_logger(name=self.__class__.__name__, level='INFO')
+        self._dump = self.crawler.settings.get_bool('STATS_DUMP')
 
     def inc_value(self, key, count=1, start=0):
         self._stats[key] = self._stats.setdefault(key, start) + count
@@ -32,10 +33,11 @@ class StatsCollector(object):
         self._stats.clear()
 
     def close_spider(self, spider_name, reason):
-        self._stats['end_time'] = now()
+        self._stats['end_time'] = get_now()
         self._stats['reason'] = reason
         self._stats['cost_time(s)'] = date_delta(self._stats['start_time'], self._stats['end_time'])
-        self.logger.info(f"{spider_name} stats: \n" + pformat(self._stats))
+        if self._dump:
+            self.logger.info(f"{spider_name} stats: \n" + pformat(self._stats))
 
     def __getitem__(self, item):
         return self._stats[item]

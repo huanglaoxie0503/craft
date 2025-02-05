@@ -26,3 +26,5 @@ DOWNLOADER = 'craft.downloader.aiohttp_downloader.AioHttpDownloader'
 MIDDLEWARES = [
 
 ]
+
+STATS_DUMP = True

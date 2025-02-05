@@ -6,6 +6,7 @@
 # @Desc    :   爬虫引擎
 """
 import asyncio
+from asyncio import create_task
 from inspect import iscoroutine
 from typing import Optional, Generator, Callable
 
@@ -20,6 +21,7 @@ from craft.task_manager import TaskManager
 from craft.utils.common import transform
 from craft.utils.log import get_logger
 from craft.utils.tools import load_class
+from craft.event import spider_opened, spider_error
 
 
 class Engine(object):
@@ -46,7 +48,6 @@ class Engine(object):
         self.running = True
         self.log.info(f"info Spider started. (spider name: {self.settings.get('SPIDER_NAME')})")
         self.spider = spider
-        self.processor = Processor(self.crawler)
         self.task_manager = TaskManager(self.settings.get_int('CONCURRENCY_NUMS'))
         # 调度器
         self.scheduler = Scheduler(self.crawler)
@@ -54,22 +55,34 @@ class Engine(object):
             self.scheduler.open()
 
         # 下载器
-        # self.downloader = Downloader(self.crawler)
-        # self.downloader = HttpxDownloader(crawler=self.crawler)
         downloader_cls = self._get_downloader_cls()  # load_class(self.settings.get('DOWNLOADER'))
         self.downloader = downloader_cls(self.crawler)
         if hasattr(self.downloader, 'open'):
             self.downloader.open()
+        # 处理器
+        self.processor = Processor(self.crawler)
+        if hasattr(self.processor, 'open'):
+            self.processor.open()
 
         self.start_requests = iter(spider.start_requests())
 
         await self._open_spider()
 
     async def _open_spider(self):
+        # 通知 spider_opened 事件
+        await self.crawler.subscriber.notify(event_name=spider_opened)
+
+        # 启动爬取任务
         crawling = asyncio.create_task(self.crawl())
         create_task(self.scheduler.interval_log(self.settings.get_int('INTERVAL')))
+
+        # 启动定时日志任务（不等待）
+        asyncio.create_task(
+            self.scheduler.interval_log(self.settings.get_int('INTERVAL'))
+        )
+
+        # 等待爬取任务完成
         await crawling
-        print('*********************')
 
     async def crawl(self):
         """
@@ -143,6 +156,10 @@ class Engine(object):
             if isinstance(spider_output, (Request, Item)):
                 # 入队
                 await self.processor.enqueue(spider_output)
+            elif isinstance(spider_output, Exception):
+                await asyncio.create_task(
+                    self.crawler.subscriber.notify(spider_error, spider_output, self.spider)
+                )
             else:
                 raise OutputError(f'{type(self.spider)} must return a `Request` or a `Item`!')
 

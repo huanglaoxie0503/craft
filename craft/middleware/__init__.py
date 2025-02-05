@@ -5,7 +5,6 @@
 # @Author  :   oscar
 # @Desc    :   None
 """
-from typing import Optional
 from craft import Request, Response
 
 

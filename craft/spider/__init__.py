@@ -33,3 +33,9 @@ class Spider(object):
 
     def __str__(self):
         return self.__class__.__name__
+
+    async def spider_opened(self):
+        pass
+
+    async def spider_closed(self, reason):
+        pass

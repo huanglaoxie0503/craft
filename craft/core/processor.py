@@ -6,7 +6,11 @@
 # @Desc    :   None
 """
 from asyncio import Queue, Task, create_task
+from asyncio import Queue
+from typing import Optional
+
 from craft import Request, Item
+from craft.pipeline.pipeline_manager import PipelineManager
 
 
 class Processor:
@@ -14,6 +18,10 @@ class Processor:
         self.crawler = crawler
         self.queue: Queue = Queue()
         self._processing_task: Task | None = None  # 处理队列的任务
+        self.pipelines: Optional[PipelineManager] = None
+
+    def open(self):
+        self.pipelines = PipelineManager(self.crawler)
 
     async def _process_queue(self):
         """持续从队列中取出数据并处理"""
@@ -44,6 +52,9 @@ class Processor:
         if self._processing_task:
             self._processing_task.cancel()
 
+    async def _process_item(self, item: Item) -> None:
+        await self.pipelines.process_item(item)
+
     async def enqueue(self, output):
         """向队列中添加新条目"""
         await self.queue.put(output)
@@ -62,39 +73,3 @@ class Processor:
     def __len__(self):
         """返回当前队列中的项数"""
         return self.queue.qsize()
-# from asyncio import Queue
-# from craft import Request, Item
-#
-#
-# class Processor(object):
-#
-#     def __init__(self, crawler):
-#         self.crawler = crawler
-#         self.queue: Queue = Queue()
-#
-#     async def process(self):
-#         # 出队
-#         while not self.idle():
-#             # 队列不空闲，则取数据
-#             result = await self.queue.get()
-#             # 处理 Request
-#             if isinstance(result, Request):
-#                 await self.crawler.engine.enqueue_request(result)
-#             else:
-#                 # 处理 Item
-#                 assert isinstance(result, Item)
-#                 await self._process_item(result)
-#
-#     async def _process_item(self, item: Item) -> None:
-#         self.crawler.stats.inc_value("item_successful_count")
-#         # print(item)
-#
-#     async def enqueue(self, output):
-#         await self.queue.put(output)
-#         await self.process()
-#
-#     def idle(self) -> bool:
-#         return len(self) == 0
-#
-#     def __len__(self):
-#         return self.queue.qsize()
